@@ -1,3 +1,7 @@
+import pickle
+from pathlib import Path
+import streamlit_authenticator as stauth
+
 import pandas as pd
 import plotly.express as px
 import streamlit as st
@@ -8,127 +12,153 @@ st.set_page_config(
     layout = "wide",
     )
 
-@st.cache_data
-def get_data_from_excel():
-    df = pd.read_excel(
-        io = r'supermarkt_sales.xlsx',
-        engine = 'openpyxl',
-        sheet_name = 'Sales',
-        skiprows = 3,
-        usecols = 'B:R',
-        nrows = 1000,
+#---- USER AUTHENTICATION ----
+names = ["Ridhiwan Mseya", "Ibrahim Mpakani"]
+usernames = ["admin", "impakani"]
+
+file_path = Path(__file__).parent / "hashed_pw.pkl"
+with file_path.open("rb") as file:
+    hashed_passwords = pickle.load(file)
+
+authenticator = stauth.Authenticate(names, usernames, hashed_passwords,
+ "sales_dashboard", "k78rh?>>1" , cookie_expiry_days=1 )
+
+name, authentication_status, username = authenticator.login("Login","main")
+
+if authentication_status == False:
+    st.error("Wrong password or username")
+elif authentication_status == None:
+    st.error("Please enter your username and password")
+elif authentication_status:
+    #---- READ EXCEL FILE ----
+    @st.cache_data
+    def get_data_from_excel():
+        df = pd.read_excel(
+            io = r'supermarkt_sales.xlsx',
+            engine = 'openpyxl',
+            sheet_name = 'Sales',
+            skiprows = 3,
+            usecols = 'B:R',
+            nrows = 1000,
+        )
+
+        df["hour"] = pd.to_datetime(df["Time"], format="%H:%M:%S").dt.hour
+        return df
+
+    df = get_data_from_excel()
+    #st.dataframe(df)
+
+    #----SIDEBAR----
+    authenticator.logout("Logout", "sidebar")
+    st.sidebar.title(f"Welcome {name}")
+    st.sidebar.header("Filter:")
+    city = st.sidebar.multiselect(
+        "Select City:",
+        options=df["City"].unique(),
+        default=df["City"].unique(),
     )
 
-    df["hour"] = pd.to_datetime(df["Time"], format="%H:%M:%S").dt.hour
-    return df
+    customer_type = st.sidebar.multiselect(
+        "Select Customer Type:",
+        options=df["Customer_type"].unique(),
+        default=df["Customer_type"].unique(),
+    )
 
-df = get_data_from_excel()
-#st.dataframe(df)
+    gender = st.sidebar.multiselect(
+        "Select Gender:",
+        options=df["Gender"].unique(),
+        default=df["Gender"].unique(),
+    )
 
-#----SIDEBAR----
-st.sidebar.header("Filter:")
-city = st.sidebar.multiselect(
-    "Select City:",
-    options=df["City"].unique(),
-    default=df["City"].unique(),
-)
+    df_selection = df.query(
+        "City == @city & Customer_type == @customer_type & Gender == @gender"
+    )
 
-customer_type = st.sidebar.multiselect(
-    "Select Customer Type:",
-    options=df["Customer_type"].unique(),
-    default=df["Customer_type"].unique(),
-)
+    #st.dataframe(df_selection)
 
-gender = st.sidebar.multiselect(
-    "Select Gender:",
-    options=df["Gender"].unique(),
-    default=df["Gender"].unique(),
-)
+    #----MAIN PAGE----
+    st.title(":bar_chart: Sales Dashboard")
+    st.markdown("##")
 
-df_selection = df.query(
-    "City == @city & Customer_type == @customer_type & Gender == @gender"
-)
+    # TOP KPI's
+    total_sales = int(df_selection["Total"].sum())
+    average_rating = round(df_selection["Rating"].mean(),1)
+    star_rating = ":star:" * int(round(average_rating,0))
+    average_sale_by_transaction = round(df_selection["Total"].mean(), 2)
 
-#st.dataframe(df_selection)
+    left_column, middle_column, right_column = st.columns(3)
+    with left_column:
+        st.subheader("Total Sales:")
+        st.subheader(f"US $ {total_sales:,}")
+    with middle_column:
+        st.subheader("Average rating:")
+        st.subheader(f"{average_rating} {star_rating}")
+    with right_column:
+        st.subheader("Average Sales Per Transaction:")
+        st.subheader(f"US $ {average_sale_by_transaction}")
 
-#----MAIN PAGE----
-st.title(":bar_chart: Sales Dashboard")
-st.markdown("##")
+    st.markdown("---")
 
-# TOP KPI's
-total_sales = int(df_selection["Total"].sum())
-average_rating = round(df_selection["Rating"].mean(),1)
-star_rating = ":star:" * int(round(average_rating,0))
-average_sale_by_transaction = round(df_selection["Total"].mean(), 2)
+    # SALES BY PRODUCT LINE [BAR CHART]
+    sales_by_product_line = (
+        df_selection.groupby(by=["Product line"]).sum()[["Total"]].sort_values(by="Total")
+    )
 
-left_column, middle_column, right_column = st.columns(3)
-with left_column:
-    st.subheader("Total Sales:")
-    st.subheader(f"US $ {total_sales:,}")
-with middle_column:
-    st.subheader("Average rating:")
-    st.subheader(f"{average_rating} {star_rating}")
-with right_column:
-    st.subheader("Average Sales Per Transaction:")
-    st.subheader(f"US $ {average_sale_by_transaction}")
+    fig_product_sales = px.bar(
+        sales_by_product_line,
+        x="Total",
+        y=sales_by_product_line.index,
+        orientation='h',
+        title= "<b> Sales by Product Line</b>",
+        color_discrete_sequence=["#0083B8"] * len(sales_by_product_line),
+        template = "plotly_white",
+    )
 
-st.markdown("---")
+    fig_product_sales.update_layout(
+        plot_bgcolor = "rgba(0,0,0,0)",
+        xaxis = (dict(showgrid=False)),
+    )
 
-# SALES BY PRODUCT LINE [BAR CHART]
-sales_by_product_line = (
-    df_selection.groupby(by=["Product line"]).sum()[["Total"]].sort_values(by="Total")
-)
+    #st.plotly_chart(fig_product_sales)
 
-fig_product_sales = px.bar(
-    sales_by_product_line,
-    x="Total",
-    y=sales_by_product_line.index,
-    orientation='h',
-    title= "<b> Sales by Product Line</b>",
-    color_discrete_sequence=["#0083B8"] * len(sales_by_product_line),
-    template = "plotly_white",
-)
+    # SALES BY HOUR [BAR CHART]
+    sales_by_hour = (
+        df_selection.groupby(by=["hour"]).sum()[["Total"]]
+    )
 
-fig_product_sales.update_layout(
-    plot_bgcolor = "rgba(0,0,0,0)",
-    xaxis = (dict(showgrid=False)),
-)
+    fig_hourly_sales = px.bar(
+        sales_by_hour,
+        y="Total",
+        x=sales_by_hour.index,
+        title= "<b> Sales by Hour</b>",
+        color_discrete_sequence=["#0083B8"] * len(sales_by_hour),
+        template = "plotly_white",
+    )
 
-#st.plotly_chart(fig_product_sales)
+    fig_hourly_sales.update_layout(
+        plot_bgcolor = "rgba(0,0,0,0)",
+        xaxis = dict(tickmode="linear"),
+        yaxis = (dict(showgrid=False)),
+    )
 
-# SALES BY HOUR [BAR CHART]
-sales_by_hour = (
-    df_selection.groupby(by=["hour"]).sum()[["Total"]]
-)
+    #st.plotly_chart(fig_hourly_sales)
 
-fig_hourly_sales = px.bar(
-    sales_by_hour,
-    y="Total",
-    x=sales_by_hour.index,
-    title= "<b> Sales by Hour</b>",
-    color_discrete_sequence=["#0083B8"] * len(sales_by_hour),
-    template = "plotly_white",
-)
+    left_column, right_column = st.columns(2)
+    left_column.plotly_chart(fig_hourly_sales,use_container_width=True)
+    right_column.plotly_chart(fig_product_sales,use_container_width=True)
 
-fig_hourly_sales.update_layout(
-    plot_bgcolor = "rgba(0,0,0,0)",
-    xaxis = dict(tickmode="linear"),
-    yaxis = (dict(showgrid=False)),
-)
+    #---- HIDE STREAMLIT STYLE ----
+    hide_st_style = """ 
+                <style>
+                #MainMenu {visibility: hidden;}
+                footer {visibility: hidden;}
+                header {visibility: hidden;}
+                </style>
+                """
 
-#st.plotly_chart(fig_hourly_sales)
+    st.markdown(hide_st_style,unsafe_allow_html=True)
 
-left_column, right_column = st.columns(2)
-left_column.plotly_chart(fig_hourly_sales,use_container_width=True)
-right_column.plotly_chart(fig_product_sales,use_container_width=True)
+else:
+    st.error("Something went wrong!")
 
-#---- HIDE STREAMLIT STYLE ----
-hide_st_style = """ 
-            <style>
-            #MainMenu {visibility: hidden;}
-            footer {visibility: hidden;}
-            header {visibility: hidden;}
-            </style>
-            """
 
-st.markdown(hide_st_style,unsafe_allow_html=True)
