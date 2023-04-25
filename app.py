@@ -11,7 +11,7 @@ st.set_page_config(
 @st.cache_data
 def get_data_from_excel():
     df = pd.read_excel(
-        io = r'C:/Users/Zakia/Documents/VS_code/Dashboard/supermarkt_sales.xlsx',
+        io = r'.\supermarkt_sales.xlsx',
         engine = 'openpyxl',
         sheet_name = 'Sales',
         skiprows = 3,
