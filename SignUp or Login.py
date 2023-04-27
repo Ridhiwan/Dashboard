@@ -4,6 +4,7 @@ import json
 import streamlit as st
 from streamlit_extras.switch_page_button import switch_page
 
+
 st.set_page_config(
     page_title="Sales Dashboard",
     page_icon=":bar_chart:",
@@ -51,7 +52,7 @@ def sign_up():
     email = st.text_input("Enter your email", placeholder="admin@dashy.com", key="em")
     password = st.text_input("Enter your password", type="password", key="pass")
     confirm_password = st.text_input("Confirm your password", type="password", key="con")
-    submit = st.button("Create Account",key="submit")
+    submit = st.button("Create Account")
     if password != confirm_password:
         submit = False
         st.error("Passwords do not match.")
@@ -69,7 +70,7 @@ def sign_up():
             try:     
                 account = auth.create_user_with_email_and_password(email, password)
                 st.success("Your account has been created successfully!")
-                switch_page("analysis")
+                switch_page("Analysis")
             except requests.HTTPError as e:
                 error_json = e.args[1]
                 error = json.loads(error_json)['error']['message']
@@ -80,11 +81,13 @@ def login():
     email = st.text_input("Enter your email", placeholder="admin@dashy.com")
     password = st.text_input("Enter your password",type="password")
     login = st.button("Login")
-
+    if "login" not in st.session_state:
+        st.session_state["login"] = False
     if login:
         try:
             user = auth.sign_in_with_email_and_password(email, password)
-            switch_page("analysis")
+            st.session_state["login"] =True
+            switch_page("Analysis")
         except requests.HTTPError as e:
                     error_json = e.args[1]
                     error = json.loads(error_json)['error']['message']
@@ -94,11 +97,12 @@ def login():
 
 
 if __name__ == '__main__':
-     firebase, auth = firebase_auth()
-     db, stg = firebase_db()
-     select = st.selectbox("Sign up/Login",["Sign up", "Login"])
-     if select == "Sign up":
+    st.session_state.update(st.session_state) 
+    firebase, auth = firebase_auth()
+    db, stg = firebase_db()
+    select = st.selectbox("Sign up/Login",["Sign up", "Login"])
+    if select == "Sign up":
         sign_up()
-     elif select == "Login":
-         login()
+    elif select == "Login":
+        login()
 

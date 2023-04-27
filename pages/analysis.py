@@ -1,6 +1,7 @@
 import pandas as pd
 import plotly.express as px
 import streamlit as st
+from streamlit_extras.switch_page_button import switch_page
 
 #---- READ EXCEL FILE ----
 @st.cache_data
@@ -123,4 +124,10 @@ def analysis():
     st.markdown(hide_st_style,unsafe_allow_html=True)
 
 #---- CREATE PAGE ----
-analysis()
+if __name__ == '__main__':
+    st.session_state.update(st.session_state)
+    try:
+        if st.session_state["login"]:
+            analysis()
+    except Exception as e:
+        switch_page("SignUp or Login")
