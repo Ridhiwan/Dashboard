@@ -130,5 +130,5 @@ if __name__ == '__main__':
         if st.session_state["login"]:
             analysis()
     except Exception as e:
-        switch_page("SignUp or Login")
         st.error(e)
+        switch_page("SignUp or Login")
