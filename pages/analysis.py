@@ -1,62 +1,35 @@
-import pickle
-from pathlib import Path
-import streamlit_authenticator as stauth
-
 import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-st.set_page_config(
-    page_title="Sales Dashboard",
-    page_icon=":bar_chart:",
-    layout = "wide",
+#---- READ EXCEL FILE ----
+@st.cache_data
+def get_data_from_excel():
+    df = pd.read_excel(
+        io = r'C:\Users\Zakia\Documents\GitHub\Dashboard\pages\supermarkt_sales.xlsx',
+        engine = 'openpyxl',
+        sheet_name = 'Sales',
+        skiprows = 3,
+        usecols = 'B:R',
+        nrows = 1000,
     )
 
-#---- USER AUTHENTICATION ----
-names = ["Ridhiwan Mseya", "Ibrahim Mpakani"]
-usernames = ["admin", "impakani"]
+    df["hour"] = pd.to_datetime(df["Time"], format="%H:%M:%S").dt.hour
+    return df
 
-file_path = Path(__file__).parent / "hashed_pw.pkl"
-with file_path.open("rb") as file:
-    hashed_passwords = pickle.load(file)
-
-credentials = {"usernames":{}}
-
-for un, name, pw in zip(usernames, names, hashed_passwords):
-    user_dict = {"name":name,"password":pw}
-    credentials["usernames"].update({un:user_dict})
-
-authenticator = stauth.Authenticate(credentials, "sales_dashboard",
- "k78rh?>>1", cookie_expiry_days=1)
-
-name, authentication_status, username = authenticator.login("Login","main")
-
-if authentication_status == False:
-    st.error("Wrong password or username")
-elif authentication_status == None:
-    st.error("Please enter your username and password")
-elif authentication_status:
-    #---- READ EXCEL FILE ----
-    @st.cache_data
-    def get_data_from_excel():
-        df = pd.read_excel(
-            io = r'supermarkt_sales.xlsx',
-            engine = 'openpyxl',
-            sheet_name = 'Sales',
-            skiprows = 3,
-            usecols = 'B:R',
-            nrows = 1000,
-        )
-
-        df["hour"] = pd.to_datetime(df["Time"], format="%H:%M:%S").dt.hour
-        return df
+def analysis():
+    #---- HIDE STREAMLIT STYLE ----
+    hide_st_style = """ 
+                    <style>
+                    #MainMenu {visibility: hidden;}
+                    footer {visibility: hidden;}
+                    header {visibility: hidden;}
+                    </style>
+                    """
 
     df = get_data_from_excel()
-    #st.dataframe(df)
 
     #----SIDEBAR----
-    authenticator.logout("Logout", "sidebar")
-    st.sidebar.title(f"Welcome {name}")
     st.sidebar.header("Filter:")
     city = st.sidebar.multiselect(
         "Select City:",
@@ -79,8 +52,6 @@ elif authentication_status:
     df_selection = df.query(
         "City == @city & Customer_type == @customer_type & Gender == @gender"
     )
-
-    #st.dataframe(df_selection)
 
     #----MAIN PAGE----
     st.title(":bar_chart: Sales Dashboard")
@@ -125,8 +96,6 @@ elif authentication_status:
         xaxis = (dict(showgrid=False)),
     )
 
-    #st.plotly_chart(fig_product_sales)
-
     # SALES BY HOUR [BAR CHART]
     sales_by_hour = (
         df_selection.groupby(by=["hour"]).sum()[["Total"]]
@@ -147,24 +116,11 @@ elif authentication_status:
         yaxis = (dict(showgrid=False)),
     )
 
-    #st.plotly_chart(fig_hourly_sales)
-
     left_column, right_column = st.columns(2)
     left_column.plotly_chart(fig_hourly_sales,use_container_width=True)
     right_column.plotly_chart(fig_product_sales,use_container_width=True)
 
-    #---- HIDE STREAMLIT STYLE ----
-    hide_st_style = """ 
-                <style>
-                #MainMenu {visibility: hidden;}
-                footer {visibility: hidden;}
-                header {visibility: hidden;}
-                </style>
-                """
-
     st.markdown(hide_st_style,unsafe_allow_html=True)
 
-else:
-    st.error("Something went wrong!")
-
-
+#---- CREATE PAGE ----
+analysis()
