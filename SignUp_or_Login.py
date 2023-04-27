@@ -3,6 +3,8 @@ import requests
 import json
 import streamlit as st
 from streamlit_extras.switch_page_button import switch_page
+st.session_state.update(st.session_state) 
+
 
 
 st.set_page_config(
@@ -97,7 +99,6 @@ def login():
 
 
 if __name__ == '__main__':
-    st.session_state.update(st.session_state) 
     firebase, auth = firebase_auth()
     db, stg = firebase_db()
     select = st.selectbox("Sign up/Login",["Sign up", "Login"])

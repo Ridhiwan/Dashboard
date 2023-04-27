@@ -2,6 +2,7 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 from streamlit_extras.switch_page_button import switch_page
+st.session_state.update(st.session_state)
 
 #---- READ EXCEL FILE ----
 @st.cache_data
@@ -125,7 +126,6 @@ def analysis():
 
 #---- CREATE PAGE ----
 if __name__ == '__main__':
-    st.session_state.update(st.session_state)
     try:
         if st.session_state["login"]:
             analysis()
