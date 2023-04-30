@@ -3,6 +3,7 @@ import plotly.express as px
 import streamlit as st
 from streamlit_extras.switch_page_button import switch_page
 
+
 #---- READ EXCEL FILE ----
 @st.cache_data
 def get_data_from_excel():
@@ -126,10 +127,9 @@ def analysis():
 #---- CREATE PAGE ----
 if __name__ == '__main__':
     try:
-        if st.session_state["signup"]:
-            analysis()
-        elif st.session_state["login"]:
+        if st.session_state["login"]:
             analysis()
     except Exception as e:
         st.error(e)
         switch_page("SignUp or Login")
+        

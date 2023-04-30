@@ -50,56 +50,56 @@ def firebase_db():
     stg = firebase.storage()
     return db, stg
 
+# Orientation
+buffer, col, buffer2 = st.columns([1,3,1])
+
 # Authentication
 def sign_up():
-    email = st.text_input("Enter your email", placeholder="you@example.com", key="em")
-    password = st.text_input("Enter your password", type="password", key="pass")
-    confirm_password = st.text_input("Confirm your password", type="password", key="con")
-    submit = st.button("Create Account")
+    email = col.text_input("Enter your email", placeholder="you@example.com", key="em")
+    password = col.text_input("Enter your password", type="password", key="pass")
+    confirm_password = col.text_input("Confirm your password", type="password", key="con")
+    submit = col.button("Create Account")
     if password != confirm_password:
         submit = False
-        st.error("Passwords do not match.")
+        col.error("Passwords do not match.")
     elif len(password) < 8:
         submit = False
-        st.error("Password must be at least 8 characters long.")
+        col.error("Password must be at least 8 characters long.")
     elif not any(char.isdigit() for char in password):
         submit = False
-        st.error("Password must contain at least one digit.")
+        col.error("Password must contain at least one digit.")
     elif not any(char.isupper() for char in password):
         submit = False
-        st.error("Password must contain at least one uppercase letter.")
+        col.error("Password must contain at least one uppercase letter.")
     elif not re.search('@dashy.com', email):
-        st.error("You have entered an invalid email")
-    elif "signup" not in st.session_state:
-        st.session_state["signup"] = False
+        col.error("You have entered an invalid email")
     else:
         if submit:
             try:     
-                account = auth.create_user_with_email_and_password(email, password)
-                st.success("Your account has been created successfully!")
-                st.session_state["signup"] = True
-                switch_page("Analysis")
+                auth.create_user_with_email_and_password(email, password)
+                col.success('''Your account has been created successfully!
+                                Please Login.''')
             except requests.HTTPError as e:
                 error_json = e.args[1]
                 error = json.loads(error_json)['error']['message']
-                st.error(error)
+                col.error(error)
     st.markdown(hide_st_style,unsafe_allow_html=True)
 
 def login():
-    email = st.text_input("Enter your email", placeholder="you@example.com")
-    password = st.text_input("Enter your password",type="password")
-    login = st.button("Login")
+    email = col.text_input("Enter your email", placeholder="you@example.com")
+    password = col.text_input("Enter your password",type="password")
+    login = col.button("Login")
     if "login" not in st.session_state:
         st.session_state["login"] = False
     if login:
         try:
-            user = auth.sign_in_with_email_and_password(email, password)
+            auth.sign_in_with_email_and_password(email, password)
             st.session_state["login"] =True
             switch_page("Analysis")
         except requests.HTTPError as e:
                     error_json = e.args[1]
                     error = json.loads(error_json)['error']['message']
-                    st.error(error)
+                    col.error(error)
 
     st.markdown(hide_st_style,unsafe_allow_html=True)
 
@@ -107,9 +107,10 @@ def login():
 if __name__ == '__main__':
     firebase, auth = firebase_auth()
     db, stg = firebase_db()
-    select = st.selectbox("Sign up/Login",["Sign up", "Login"])
+    select = col.selectbox("Sign up/Login",["Sign up", "Login"],
+     help="Click the box to Sign Up or Login")
     if select == "Sign up":
         sign_up()
-    elif select == "Login":
+    if select == "Login":
         login()
 
