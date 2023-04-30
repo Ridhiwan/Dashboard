@@ -1,9 +1,10 @@
 import pyrebase as pb
 import requests
 import json
+import re
 import streamlit as st
 from streamlit_extras.switch_page_button import switch_page
-st.session_state.update(st.session_state) 
+st.session_state.update(st.session_state)
 
 
 
@@ -51,7 +52,7 @@ def firebase_db():
 
 # Authentication
 def sign_up():
-    email = st.text_input("Enter your email", placeholder="admin@dashy.com", key="em")
+    email = st.text_input("Enter your email", placeholder="you@example.com", key="em")
     password = st.text_input("Enter your password", type="password", key="pass")
     confirm_password = st.text_input("Confirm your password", type="password", key="con")
     submit = st.button("Create Account")
@@ -67,11 +68,16 @@ def sign_up():
     elif not any(char.isupper() for char in password):
         submit = False
         st.error("Password must contain at least one uppercase letter.")
+    elif not re.search('@dashy.com', email):
+        st.error("You have entered an invalid email")
+    elif "signup" not in st.session_state:
+        st.session_state["signup"] = False
     else:
         if submit:
             try:     
                 account = auth.create_user_with_email_and_password(email, password)
                 st.success("Your account has been created successfully!")
+                st.session_state["signup"] = True
                 switch_page("Analysis")
             except requests.HTTPError as e:
                 error_json = e.args[1]
@@ -80,7 +86,7 @@ def sign_up():
     st.markdown(hide_st_style,unsafe_allow_html=True)
 
 def login():
-    email = st.text_input("Enter your email", placeholder="admin@dashy.com")
+    email = st.text_input("Enter your email", placeholder="you@example.com")
     password = st.text_input("Enter your password",type="password")
     login = st.button("Login")
     if "login" not in st.session_state:
