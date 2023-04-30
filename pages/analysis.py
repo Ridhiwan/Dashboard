@@ -2,22 +2,42 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 from streamlit_extras.switch_page_button import switch_page
+from PIL import Image
+import base64
 
 
 #---- READ EXCEL FILE ----
+uploaded_file = st.sidebar.file_uploader(label="Upload your file(CSV or Excel)",
+    type=['csv','xlsx'])
+
 @st.cache_data
 def get_data_from_excel():
-    df = pd.read_excel(
-        io = r'C:\Users\Zakia\Documents\GitHub\Dashboard\pages\supermarkt_sales.xlsx',
-        engine = 'openpyxl',
-        sheet_name = 'Sales',
-        skiprows = 3,
-        usecols = 'B:R',
-        nrows = 1000,
-    )
-
-    df["hour"] = pd.to_datetime(df["Time"], format="%H:%M:%S").dt.hour
-    return df
+    if uploaded_file is not None:
+        try:
+            df = pd.read_excel(
+                io = r'C:\Users\Zakia\Documents\GitHub\Dashboard\pages\supermarkt_sales.xlsx',
+                engine = 'openpyxl',
+                sheet_name = 'Sales',
+                skiprows = 3,
+                usecols = 'B:R',
+                nrows = 1000,
+            )
+            df["hour"] = pd.to_datetime(df["Time"], format="%H:%M:%S").dt.hour
+            return df
+        except Exception:
+            try:
+                df = pd.read_csv(
+                    io = r'C:\Users\Zakia\Documents\GitHub\Dashboard\pages\supermarkt_sales.xlsx',
+                    engine = 'openpyxl',
+                    sheet_name = 'Sales',
+                    skiprows = 3,
+                    usecols = 'B:R',
+                    nrows = 1000,
+                )
+                df["hour"] = pd.to_datetime(df["Time"], format="%H:%M:%S").dt.hour
+                return df
+            except Exception as e:
+                st.error(e)
 
 def analysis():
     #---- HIDE STREAMLIT STYLE ----
@@ -29,107 +49,117 @@ def analysis():
                     </style>
                     """
 
-    df = get_data_from_excel()
+    if get_data_from_excel() is not None:
+        df = get_data_from_excel()
 
-    #----SIDEBAR----
-    st.sidebar.header("Filter:")
-    city = st.sidebar.multiselect(
-        "Select City:",
-        options=df["City"].unique(),
-        default=df["City"].unique(),
-    )
+        #----SIDEBAR----
+        st.sidebar.header("Filter:")
+        city = st.sidebar.multiselect(
+            "Select City:",
+            options=df["City"].unique(),
+            default=df["City"].unique(),
+        )
 
-    customer_type = st.sidebar.multiselect(
-        "Select Customer Type:",
-        options=df["Customer_type"].unique(),
-        default=df["Customer_type"].unique(),
-    )
+        customer_type = st.sidebar.multiselect(
+            "Select Customer Type:",
+            options=df["Customer_type"].unique(),
+            default=df["Customer_type"].unique(),
+        )
 
-    gender = st.sidebar.multiselect(
-        "Select Gender:",
-        options=df["Gender"].unique(),
-        default=df["Gender"].unique(),
-    )
+        gender = st.sidebar.multiselect(
+            "Select Gender:",
+            options=df["Gender"].unique(),
+            default=df["Gender"].unique(),
+        )
 
-    df_selection = df.query(
-        "City == @city & Customer_type == @customer_type & Gender == @gender"
-    )
+        df_selection = df.query(
+            "City == @city & Customer_type == @customer_type & Gender == @gender"
+        )
 
-    #----MAIN PAGE----
-    st.title(":bar_chart: Sales Dashboard")
-    st.markdown("##")
+        #----MAIN PAGE----
+        st.title(":bar_chart: Sales Dashboard")
+        st.markdown("##")
 
-    # TOP KPI's
-    total_sales = int(df_selection["Total"].sum())
-    average_rating = round(df_selection["Rating"].mean(),1)
-    star_rating = ":star:" * int(round(average_rating,0))
-    average_sale_by_transaction = round(df_selection["Total"].mean(), 2)
+        # TOP KPI's
+        total_sales = int(df_selection["Total"].sum())
+        average_rating = round(df_selection["Rating"].mean(),1)
+        star_rating = ":star:" * int(round(average_rating,0))
+        average_sale_by_transaction = round(df_selection["Total"].mean(), 2)
 
-    left_column, middle_column, right_column = st.columns(3)
-    with left_column:
-        st.subheader("Total Sales:")
-        st.subheader(f"US $ {total_sales:,}")
-    with middle_column:
-        st.subheader("Average rating:")
-        st.subheader(f"{average_rating} {star_rating}")
-    with right_column:
-        st.subheader("Average Sales Per Transaction:")
-        st.subheader(f"US $ {average_sale_by_transaction}")
+        left_column, middle_column, right_column = st.columns(3)
+        with left_column:
+            st.subheader("Total Sales:")
+            st.subheader(f"US $ {total_sales:,}")
+        with middle_column:
+            st.subheader("Average rating:")
+            st.subheader(f"{average_rating} {star_rating}")
+        with right_column:
+            st.subheader("Average Sales Per Transaction:")
+            st.subheader(f"US $ {average_sale_by_transaction}")
 
-    st.markdown("---")
+        st.markdown("---")
 
-    # SALES BY PRODUCT LINE [BAR CHART]
-    sales_by_product_line = (
-        df_selection.groupby(by=["Product line"]).sum()[["Total"]].sort_values(by="Total")
-    )
+        # SALES BY PRODUCT LINE [BAR CHART]
+        sales_by_product_line = (
+            df_selection.groupby(by=["Product line"]).sum()[["Total"]].sort_values(by="Total")
+        )
 
-    fig_product_sales = px.bar(
-        sales_by_product_line,
-        x="Total",
-        y=sales_by_product_line.index,
-        orientation='h',
-        title= "<b> Sales by Product Line</b>",
-        color_discrete_sequence=["#0083B8"] * len(sales_by_product_line),
-        template = "plotly_white",
-    )
+        fig_product_sales = px.bar(
+            sales_by_product_line,
+            x="Total",
+            y=sales_by_product_line.index,
+            orientation='h',
+            title= "<b> Sales by Product Line</b>",
+            color_discrete_sequence=["#0083B8"] * len(sales_by_product_line),
+            template = "plotly_white",
+        )
 
-    fig_product_sales.update_layout(
-        plot_bgcolor = "rgba(0,0,0,0)",
-        xaxis = (dict(showgrid=False)),
-    )
+        fig_product_sales.update_layout(
+            plot_bgcolor = "rgba(0,0,0,0)",
+            xaxis = (dict(showgrid=False)),
+        )
 
-    # SALES BY HOUR [BAR CHART]
-    sales_by_hour = (
-        df_selection.groupby(by=["hour"]).sum()[["Total"]]
-    )
+        # SALES BY HOUR [BAR CHART]
+        sales_by_hour = (
+            df_selection.groupby(by=["hour"]).sum()[["Total"]]
+        )
 
-    fig_hourly_sales = px.bar(
-        sales_by_hour,
-        y="Total",
-        x=sales_by_hour.index,
-        title= "<b> Sales by Hour</b>",
-        color_discrete_sequence=["#0083B8"] * len(sales_by_hour),
-        template = "plotly_white",
-    )
+        fig_hourly_sales = px.bar(
+            sales_by_hour,
+            y="Total",
+            x=sales_by_hour.index,
+            title= "<b> Sales by Hour</b>",
+            color_discrete_sequence=["#0083B8"] * len(sales_by_hour),
+            template = "plotly_white",
+        )
 
-    fig_hourly_sales.update_layout(
-        plot_bgcolor = "rgba(0,0,0,0)",
-        xaxis = dict(tickmode="linear"),
-        yaxis = (dict(showgrid=False)),
-    )
+        fig_hourly_sales.update_layout(
+            plot_bgcolor = "rgba(0,0,0,0)",
+            xaxis = dict(tickmode="linear"),
+            yaxis = (dict(showgrid=False)),
+        )
 
-    left_column, right_column = st.columns(2)
-    left_column.plotly_chart(fig_hourly_sales,use_container_width=True)
-    right_column.plotly_chart(fig_product_sales,use_container_width=True)
+        left_column, right_column = st.columns(2)
+        left_column.plotly_chart(fig_hourly_sales,use_container_width=True)
+        right_column.plotly_chart(fig_product_sales,use_container_width=True)
 
-    st.markdown(hide_st_style,unsafe_allow_html=True)
+        st.markdown(hide_st_style,unsafe_allow_html=True)
+
+    else:
+        with open(r'C:\Users\Zakia\Documents\GitHub\Dashboard\pages\DashyB_logo.gif', "rb") as gif_file:
+            gif_url = base64.b64encode(gif_file.read()).decode("utf-8")
+        st.markdown(f'<img src="data:image/gif;base64,{gif_url}" alt="cat gif">', unsafe_allow_html=True,)
+        st.markdown("""<h1><strong>Welcome to DashyB!</strong></h1>""", unsafe_allow_html=True)
+        st.write("Please upload a CSV or Excel file to analyse.")
+        st.markdown(hide_st_style,unsafe_allow_html=True)
 
 #---- CREATE PAGE ----
 if __name__ == '__main__':
+    global df # df is in try blocks
+
     try:
         if st.session_state["login"]:
             analysis()
     except Exception as e:
         st.error(e)
         switch_page("SignUp or Login")
-        

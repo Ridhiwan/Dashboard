@@ -71,7 +71,7 @@ def sign_up():
     elif not any(char.isupper() for char in password):
         submit = False
         col.error("Password must contain at least one uppercase letter.")
-    elif not re.search('@dashy.com', email):
+    elif not re.search('@dashyb.com', email):
         col.error("You have entered an invalid email")
     else:
         if submit:
