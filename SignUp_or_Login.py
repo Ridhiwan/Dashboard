@@ -103,6 +103,16 @@ def login():
 
     st.markdown(hide_st_style,unsafe_allow_html=True)
 
+def logout():
+    if "login" not in st.session_state:
+        st.session_state["login"] = False
+        switch_page("SignUp or Login")
+    else:
+        st.session_state["login"] = False
+        switch_page("SignUp or Login")
+
+    st.markdown(hide_st_style,unsafe_allow_html=True)
+
 
 if __name__ == '__main__':
     firebase, auth = firebase_auth()

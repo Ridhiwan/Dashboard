@@ -40,6 +40,8 @@ if __name__ == "__main__":
                 homepage()
             elif file is not None:
                 switch_page("Analysis")
+        else:
+            switch_page("SignUp or Login")
     except Exception as e:
         st.error(e)
         switch_page("SignUp or Login")
