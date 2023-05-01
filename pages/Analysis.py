@@ -2,20 +2,16 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 from streamlit_extras.switch_page_button import switch_page
-from PIL import Image
-import base64
-
+from pages.Home import homepage, uploaded
 
 #---- READ EXCEL FILE ----
-uploaded_file = st.sidebar.file_uploader(label="Upload your file(CSV or Excel)",
-    type=['csv','xlsx'])
+uploaded_file = uploaded("two")
 
-@st.cache_data
 def get_data_from_excel():
     if uploaded_file is not None:
         try:
             df = pd.read_excel(
-                io = r'C:\Users\Zakia\Documents\GitHub\Dashboard\pages\supermarkt_sales.xlsx',
+                io = uploaded_file,
                 engine = 'openpyxl',
                 sheet_name = 'Sales',
                 skiprows = 3,
@@ -27,7 +23,7 @@ def get_data_from_excel():
         except Exception:
             try:
                 df = pd.read_csv(
-                    io = r'C:\Users\Zakia\Documents\GitHub\Dashboard\pages\supermarkt_sales.xlsx',
+                    io = uploaded_file,
                     engine = 'openpyxl',
                     sheet_name = 'Sales',
                     skiprows = 3,
@@ -145,14 +141,8 @@ def analysis():
 
         st.markdown(hide_st_style,unsafe_allow_html=True)
 
-    else:
-        buffer, col, buffer2 = st.columns([1,3,1])
-        with open(r'C:\Users\Zakia\Documents\GitHub\Dashboard\pages\DashyB_logo_cropped.gif', "rb") as gif_file:
-            gif_url = base64.b64encode(gif_file.read()).decode("utf-8")
-        col.markdown(f'<img src="data:image/gif;base64,{gif_url}" alt="cat gif">', unsafe_allow_html=True,)
-        col.markdown("""<h1><strong>Welcome to DashyB!</strong></h1>""", unsafe_allow_html=True)
-        col.write("Please upload a CSV or Excel file to analyse.")
-        st.markdown(hide_st_style,unsafe_allow_html=True)
+    elif get_data_from_excel() is None:
+        homepage()
 
 #---- CREATE PAGE ----
 if __name__ == '__main__':

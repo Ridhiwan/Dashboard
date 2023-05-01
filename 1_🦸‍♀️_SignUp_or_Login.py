@@ -95,7 +95,7 @@ def login():
         try:
             auth.sign_in_with_email_and_password(email, password)
             st.session_state["login"] =True
-            switch_page("Analysis")
+            switch_page("Home")
         except requests.HTTPError as e:
                     error_json = e.args[1]
                     error = json.loads(error_json)['error']['message']
