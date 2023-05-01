@@ -4,10 +4,10 @@ from PIL import Image
 import base64
 
 #---- UPLOAD FILE ----
-@st.cache_data(experimental_allow_widgets=True)
+@st.cache_data(experimental_allow_widgets=True,persist=True)
 def uploaded(key):
     uploaded_file = st.sidebar.file_uploader(label="Upload your file(CSV or Excel)",
-        type=['csv','xlsx'],key=key)
+        type=['csv','xlsx'],key=key, on_change=switch_page("Analysis"))
     return uploaded_file
 
 
@@ -33,13 +33,10 @@ def homepage():
     st.markdown(hide_st_style,unsafe_allow_html=True)
 
 if __name__ == "__main__":
+    file = uploaded("one")
     try:
         if st.session_state["login"]:
-            file = uploaded("one")
-            if file is None:
-                homepage()
-            elif file is not None:
-                switch_page("Analysis")
+            homepage()
         else:
             switch_page("SignUp or Login")
     except Exception as e:
