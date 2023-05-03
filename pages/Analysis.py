@@ -2,7 +2,13 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 from streamlit_extras.switch_page_button import switch_page
-from pages.Home import homepage, uploaded
+from pages.Home import homepage
+
+#---- UPLOAD FILE ----
+def uploaded(key):
+    uploaded_file = st.sidebar.file_uploader(label="Upload your file(CSV or Excel)",
+        type=['csv','xlsx'],key=key,)
+    return uploaded_file 
 
 #---- READ EXCEL FILE ----
 uploaded_file = uploaded("two")

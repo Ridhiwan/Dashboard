@@ -1,14 +1,6 @@
 import streamlit as st
 from streamlit_extras.switch_page_button import switch_page
-from PIL import Image
 import base64
-
-#---- UPLOAD FILE ----
-@st.cache_data(experimental_allow_widgets=True,persist=True)
-def uploaded(key):
-    uploaded_file = st.sidebar.file_uploader(label="Upload your file(CSV or Excel)",
-        type=['csv','xlsx'],key=key, on_change=switch_page("Analysis"))
-    return uploaded_file
 
 
 #---- HOME PAGE ----
@@ -30,10 +22,22 @@ def homepage():
     col.markdown(f'<img src="data:image/gif;base64,{gif_url}" alt="cat gif">', unsafe_allow_html=True,)
     col.markdown("""<h1><strong>Welcome to DashyB!</strong></h1>""", unsafe_allow_html=True)
     col.write("Please upload a CSV or Excel file to analyse.")
+
+    #---- PAGE CHANGE ----
+    with st.sidebar.container():
+            st.header("Type of Analysis")
+            analysis = st.radio("Choose one",
+            ["select","Market Analysis","Tax Analysis", "Forecast Analysis"],)
+    
+    if analysis == "Tax Analysis":
+        switch_page("Analysis")
+    elif analysis == "select":
+        pass
+    else:
+        pass
     st.markdown(hide_st_style,unsafe_allow_html=True)
 
 if __name__ == "__main__":
-    file = uploaded("one")
     try:
         if st.session_state["login"]:
             homepage()
