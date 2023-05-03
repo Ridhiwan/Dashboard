@@ -2,7 +2,7 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 from streamlit_extras.switch_page_button import switch_page
-from pages.Home import homepage
+from pages.Home import homepage, home_placeholder
 
 #---- UPLOAD FILE ----
 def uploaded(key):
@@ -148,7 +148,7 @@ def analysis():
         st.markdown(hide_st_style,unsafe_allow_html=True)
 
     elif get_data_from_excel() is None:
-        homepage()
+        home_placeholder("Please upload a CSV or Excel file to analyse.")
 
 #---- CREATE PAGE ----
 if __name__ == '__main__':
