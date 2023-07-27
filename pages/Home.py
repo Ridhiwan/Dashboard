@@ -27,10 +27,12 @@ def homepage():
     with st.sidebar.container():
             st.header("Type of Analysis")
             analysis = st.radio("Choose one",
-            ["select","Market Analysis","Tax Analysis", "Forecast Analysis"],)
+            ["select","Inventory Analysis", "Sales Analysis",],)
     
-    if analysis == "Tax Analysis":
+    if analysis == "Sales Analysis":
         switch_page("Analysis")
+    elif analysis == "Inventory Analysis":
+        switch_page("Inventory")
     elif analysis == "select":
         pass
     else:

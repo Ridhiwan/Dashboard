@@ -9,7 +9,7 @@ st.session_state.update(st.session_state)
 
 
 st.set_page_config(
-    page_title="Sales Dashboard",
+    page_title="DashyB - Analyse and Present",
     page_icon=":bar_chart:",
     layout = "wide",
     )
