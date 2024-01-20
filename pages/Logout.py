@@ -1,7 +1,7 @@
 import streamlit as st
 from streamlit_extras.switch_page_button import switch_page
 
-#---- HIDE STREAMLIT STYLE ----
+# ---- HIDE STREAMLIT STYLE ----
 hide_st_style = """ 
                 <style>
                 #MainMenu {visibility: hidden;}
@@ -9,6 +9,7 @@ hide_st_style = """
                 header {visibility: hidden;}
                 </style>
                 """
+
 
 def logout():
     if "login" not in st.session_state:
@@ -18,7 +19,8 @@ def logout():
         st.session_state["login"] = False
         switch_page("SignUp or Login")
 
-    st.markdown(hide_st_style,unsafe_allow_html=True)
+    st.markdown(hide_st_style, unsafe_allow_html=True)
+
 
 if __name__ == "__main__":
     logout()

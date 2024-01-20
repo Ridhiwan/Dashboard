@@ -4,17 +4,16 @@ import json
 import re
 import streamlit as st
 from streamlit_extras.switch_page_button import switch_page
+
 st.session_state.update(st.session_state)
-
-
 
 st.set_page_config(
     page_title="DashyB - Analyse and Present",
     page_icon=":bar_chart:",
-    layout = "wide",
-    )
+    layout="wide",
+)
 
-#---- HIDE STREAMLIT STYLE ----
+# ---- HIDE STREAMLIT STYLE ----
 hide_st_style = """ 
                 <style>
                 #MainMenu {visibility: hidden;}
@@ -23,8 +22,7 @@ hide_st_style = """
                 </style>
                 """
 
-
-#---- USER AUTHENTICATION ----
+# ---- USER AUTHENTICATION ----
 
 # Configuration key
 firebaseConfig = {
@@ -36,22 +34,26 @@ firebaseConfig = {
     'messagingSenderId': "172538484816",
     'appId': "1:172538484816:web:70c21420b0124dc890d955",
     'measurementId': "G-MRJSEC32NG"
-  }
+}
+
 
 # Firebase Authentication
 def firebase_auth():
-    firebase = pb.initialize_app(firebaseConfig)
-    auth = firebase.auth()
-    return firebase, auth
+    fb = pb.initialize_app(firebaseConfig)
+    authentication = fb.auth()
+    return fb, authentication
+
 
 # Database
 def firebase_db():
-    db = firebase.database()
-    stg = firebase.storage()
-    return db, stg
+    database = firebase.database()
+    storage = firebase.storage()
+    return database, storage
+
 
 # Orientation
-buffer, col, buffer2 = st.columns([1,3,1])
+buffer, col, buffer2 = st.columns([1, 3, 1])
+
 
 # Authentication
 def sign_up():
@@ -61,21 +63,25 @@ def sign_up():
     submit = col.button("Create Account")
     if password != confirm_password:
         submit = False
-        col.error("Passwords do not match.")
+        if not submit:
+            col.error("Passwords do not match.")
     elif len(password) < 8:
         submit = False
-        col.error("Password must be at least 8 characters long.")
+        if not submit:
+            col.error("Password must be at least 8 characters long.")
     elif not any(char.isdigit() for char in password):
         submit = False
-        col.error("Password must contain at least one digit.")
+        if not submit:
+            col.error("Password must contain at least one digit.")
     elif not any(char.isupper() for char in password):
         submit = False
-        col.error("Password must contain at least one uppercase letter.")
+        if not submit:
+            col.error("Password must contain at least one uppercase letter.")
     elif not re.search('@dashyb.com', email):
         col.error("You have entered an invalid email")
     else:
         if submit:
-            try:     
+            try:
                 auth.create_user_with_email_and_password(email, password)
                 col.success('''Your account has been created successfully!
                                 Please Login.''')
@@ -83,34 +89,34 @@ def sign_up():
                 error_json = e.args[1]
                 error = json.loads(error_json)['error']['message']
                 col.error(error)
-    st.markdown(hide_st_style,unsafe_allow_html=True)
+    st.markdown(hide_st_style, unsafe_allow_html=True)
+
 
 def login():
     email = col.text_input("Enter your email", placeholder="you@example.com")
-    password = col.text_input("Enter your password",type="password")
-    login = col.button("Login")
+    password = col.text_input("Enter your password", type="password")
+    signin = col.button("Login")
     if "login" not in st.session_state:
         st.session_state["login"] = False
-    if login:
+    if signin:
         try:
             auth.sign_in_with_email_and_password(email, password)
-            st.session_state["login"] =True
+            st.session_state["login"] = True
             switch_page("Home")
         except requests.HTTPError as e:
-                    error_json = e.args[1]
-                    error = json.loads(error_json)['error']['message']
-                    col.error(error)
+            error_json = e.args[1]
+            error = json.loads(error_json)['error']['message']
+            col.error(error)
 
-    st.markdown(hide_st_style,unsafe_allow_html=True)
+    st.markdown(hide_st_style, unsafe_allow_html=True)
 
 
 if __name__ == '__main__':
     firebase, auth = firebase_auth()
     db, stg = firebase_db()
-    select = col.selectbox("Sign up/Login",["Sign up", "Login"],
-     help="Click the box to Sign Up or Login")
+    select = col.selectbox("Sign up/Login", ["Sign up", "Login"],
+                           help="Click the box to Sign Up or Login")
     if select == "Sign up":
         sign_up()
     if select == "Login":
         login()
-

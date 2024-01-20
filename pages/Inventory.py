@@ -1,19 +1,20 @@
 import pandas as pd
 import PyPDF2 as pdf
-import tabula 
+import tabula
 import plotly.express as px
 import streamlit as st
 from streamlit_extras.switch_page_button import switch_page
-#from pages.Home import homepage, home_placeholder
+from pages.Home import homepage, home_placeholder
 
-#---- UPLOAD FILE ----
+# ---- UPLOAD FILE ----
 def uploaded(key):
     uploaded_file = st.sidebar.file_uploader(label="Upload your file(PDF)",
-        type=['pdf'],key=key,)
-    return uploaded_file 
+                                             type=['pdf'], key=key, )
+    return uploaded_file
 
-#---- READ PDF FILE ----
-#uploaded_file = uploaded("two")
+
+# ---- READ PDF FILE ----
+# uploaded_file = uploaded("two")
 uploaded_file = r'C:\Users\Zakia\Documents\GitHub\Dashboard\wordpress-pdf-invoice-plugin-sample.pdf'
 
 
@@ -48,10 +49,10 @@ def get_data_from_pdf():
             # return df
         except Exception as e:
             st.error(e)
-            
+
 
 def analysis():
-    #---- HIDE STREAMLIT STYLE ----
+    # ---- HIDE STREAMLIT STYLE ----
     hide_st_style = """ 
                     <style>
                     #MainMenu {visibility: hidden;}
@@ -63,7 +64,7 @@ def analysis():
     if get_data_from_pdf() is not None:
         df = get_data_from_pdf()
 
-        #----SIDEBAR----
+        # ----SIDEBAR----
         st.sidebar.header("Filter:")
         city = st.sidebar.multiselect(
             "Select City:",
@@ -87,14 +88,14 @@ def analysis():
             "City == @city & Customer_type == @customer_type & Gender == @gender"
         )
 
-        #----MAIN PAGE----
+        # ----MAIN PAGE----
         st.title(":bar_chart: Sales Dashboard")
         st.markdown("##")
 
         # TOP KPI's
         total_sales = int(df_selection["Total"].sum())
-        average_rating = round(df_selection["Rating"].mean(),1)
-        star_rating = ":star:" * int(round(average_rating,0))
+        average_rating = round(df_selection["Rating"].mean(), 1)
+        star_rating = ":star:" * int(round(average_rating, 0))
         average_sale_by_transaction = round(df_selection["Total"].mean(), 2)
 
         left_column, middle_column, right_column = st.columns(3)
@@ -120,14 +121,14 @@ def analysis():
             x="Total",
             y=sales_by_product_line.index,
             orientation='h',
-            title= "<b> Sales by Product Line</b>",
+            title="<b> Sales by Product Line</b>",
             color_discrete_sequence=["#0083B8"] * len(sales_by_product_line),
-            template = "plotly_white",
+            template="plotly_white",
         )
 
         fig_product_sales.update_layout(
-            plot_bgcolor = "rgba(0,0,0,0)",
-            xaxis = (dict(showgrid=False)),
+            plot_bgcolor="rgba(0,0,0,0)",
+            xaxis=(dict(showgrid=False)),
         )
 
         # SALES BY HOUR [BAR CHART]
@@ -139,27 +140,28 @@ def analysis():
             sales_by_hour,
             y="Total",
             x=sales_by_hour.index,
-            title= "<b> Sales by Hour</b>",
+            title="<b> Sales by Hour</b>",
             color_discrete_sequence=["#0083B8"] * len(sales_by_hour),
-            template = "plotly_white",
+            template="plotly_white",
         )
 
         fig_hourly_sales.update_layout(
-            plot_bgcolor = "rgba(0,0,0,0)",
-            xaxis = dict(tickmode="linear"),
-            yaxis = (dict(showgrid=False)),
+            plot_bgcolor="rgba(0,0,0,0)",
+            xaxis=dict(tickmode="linear"),
+            yaxis=(dict(showgrid=False)),
         )
 
         left_column, right_column = st.columns(2)
-        left_column.plotly_chart(fig_hourly_sales,use_container_width=True)
-        right_column.plotly_chart(fig_product_sales,use_container_width=True)
+        left_column.plotly_chart(fig_hourly_sales, use_container_width=True)
+        right_column.plotly_chart(fig_product_sales, use_container_width=True)
 
-        st.markdown(hide_st_style,unsafe_allow_html=True)
+        st.markdown(hide_st_style, unsafe_allow_html=True)
 
     elif get_data_from_pdf() is None:
         home_placeholder("Please upload a PDF file to analyse.")
 
-#---- CREATE PAGE ----
+
+# ---- CREATE PAGE ----
 if __name__ == '__main__':
     # global df # df is in try blocks
 
